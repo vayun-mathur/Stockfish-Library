@@ -26,6 +26,8 @@
 #include "tune.h"
 #include "uci.h"
 
+#ifndef STOCKFISH_LIBRARY
+
 using namespace Stockfish;
 
 #ifdef UNIVERSAL_BINARY
@@ -59,3 +61,5 @@ int main(int argc, char* argv[]) {
 int main(int argc, char* argv[]) { return Stockfish::main(argc, argv); }
     #endif
 #endif
+
+#endif  // STOCKFISH_LIBRARY
