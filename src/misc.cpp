@@ -39,9 +39,6 @@ namespace Stockfish {
 
 namespace {
 
-// Version number or dev.
-constexpr std::string_view version = "dev";
-
 // Our fancy logging facility. The trick here is to replace cin.rdbuf() and
 // cout.rdbuf() with two Tie objects that tie cin and cout to a file stream. We
 // can toggle the logging of std::cout and std::cin at runtime whilst preserving
@@ -113,48 +110,9 @@ class Logger {
 }  // namespace
 
 
-// Returns the full name of the current Stockfish version.
-//
-// For local dev compiles we try to append the commit SHA and
-// commit date from git. If that fails only the local compilation
-// date is set and "nogit" is specified:
-//      Stockfish dev-YYYYMMDD-SHA
-//      or
-//      Stockfish dev-YYYYMMDD-nogit
-//
-// For releases (non-dev builds) we only include the version number:
-//      Stockfish version
-std::string engine_version_info() {
-    std::stringstream ss;
-    ss << "Stockfish " << version << std::setfill('0');
-
-    if constexpr (version == "dev")
-    {
-        ss << "-";
-#ifdef GIT_DATE
-        ss << stringify(GIT_DATE);
-#else
-        constexpr std::string_view months("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec");
-
-        std::string       month, day, year;
-        std::stringstream date(__DATE__);  // From compiler, format is "Sep 21 2008"
-
-        date >> month >> day >> year;
-        ss << year << std::setw(2) << std::setfill('0') << (1 + months.find(month) / 4)
-           << std::setw(2) << std::setfill('0') << day;
-#endif
-
-        ss << "-";
-
-#ifdef GIT_SHA
-        ss << stringify(GIT_SHA);
-#else
-        ss << "nogit";
-#endif
-    }
-
-    return ss.str();
-}
+// Returns the engine name. No build-specific identifier (version, date, or
+// commit) is embedded, so the binary is reproducible.
+std::string engine_version_info() { return "Stockfish"; }
 
 std::string engine_info(bool to_uci) {
     return engine_version_info() + (to_uci ? "\nid author " : " by ")
