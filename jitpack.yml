@@ -1,16 +1,12 @@
 # JitPack build configuration for the Stockfish Android library.
 #
 # Builds libstockfish.so from the C++ sources at the repo root plus the Kotlin
-# API in stockfish/, then publishes the release AAR. Toolchain versions are
-# pinned so the native binary is reproducible (must match the consuming app).
+# API in stockfish/, then publishes the release AAR. The Android Gradle Plugin
+# auto-downloads the pinned NDK (29.0.14206865), CMake (3.22.1), platform, and
+# build-tools during the build, so no explicit sdkmanager step is needed.
 
 jdk:
   - openjdk17
-
-before_install:
-  # Accept licenses, then install the pinned NDK + CMake and the target platform.
-  - yes | sdkmanager --licenses > /dev/null || true
-  - sdkmanager "platforms;android-37" "ndk;29.0.14206865" "cmake;4.1.2"
 
 install:
   - ./gradlew :stockfish:publishReleasePublicationToMavenLocal --no-daemon --stacktrace

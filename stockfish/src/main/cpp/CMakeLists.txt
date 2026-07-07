@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.1.2)
+cmake_minimum_required(VERSION 3.22.1)
 project(stockfish_lib)
 
 set(CMAKE_CXX_STANDARD 17)

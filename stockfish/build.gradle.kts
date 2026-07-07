@@ -29,7 +29,8 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "4.1.2"
+            // SDK-bundled CMake; available via sdkmanager on JitPack + locally.
+            version = "3.22.1"
         }
     }
 
