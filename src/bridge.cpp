@@ -32,19 +32,19 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_vayunmathur_games_chess_util_StockfishEngine_nativeInit(JNIEnv*, jobject) {
+Java_com_vayunmathur_stockfish_Stockfish_nativeInit(JNIEnv*, jobject) {
     sf_init();
 }
 
 JNIEXPORT void JNICALL
-Java_com_vayunmathur_games_chess_util_StockfishEngine_nativeSendCommand(JNIEnv* env, jobject, jstring command) {
+Java_com_vayunmathur_stockfish_Stockfish_nativeSendCommand(JNIEnv* env, jobject, jstring command) {
     const char* cmd = env->GetStringUTFChars(command, nullptr);
     sf_command(cmd);
     env->ReleaseStringUTFChars(command, cmd);
 }
 
 JNIEXPORT void JNICALL
-Java_com_vayunmathur_games_chess_util_StockfishEngine_nativeSetOutputCallback(JNIEnv* env, jobject, jobject callback) {
+Java_com_vayunmathur_stockfish_Stockfish_nativeSetOutputCallback(JNIEnv* env, jobject, jobject callback) {
     if (g_callback_obj)
         env->DeleteGlobalRef(g_callback_obj);
 

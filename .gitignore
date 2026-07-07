@@ -21,3 +21,11 @@ tsan.supp
 __pycache__/
 tests/syzygy
 tests/bench_tmp.epd
+
+# Android / Gradle build outputs
+.gradle/
+/build/
+stockfish/build/
+stockfish/.cxx/
+local.properties
+.idea/
