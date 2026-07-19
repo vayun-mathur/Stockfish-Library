@@ -75,6 +75,10 @@ class Network {
 
    private:
     void load_user_net(const std::string&, const std::string&);
+    // Loads the net directly from a byte range of an already-open file descriptor,
+    // described by an "fd:<fd>:<offset>:<length>" evalfile spec. Lets Android read
+    // an uncompressed APK asset in place (no copy to internal storage).
+    void load_fd_net(const std::string&);
     void load_internal();
 
     void initialize();

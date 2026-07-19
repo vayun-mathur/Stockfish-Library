@@ -19,11 +19,16 @@
 #include "network.h"
 
 #include <cstdlib>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <type_traits>
 #include <vector>
+
+#if !defined(_WIN32)
+    #include <unistd.h>  // pread, close (for the "fd:" evalfile scheme)
+#endif
 
 #define INCBIN_SILENCE_BITCODE_WARNING
 #include "../incbin/incbin.h"
@@ -85,6 +90,16 @@ bool write_parameters(std::ostream& stream, const T& reference) {
 }  // namespace Detail
 
 void Network::load(const std::string& rootDirectory, std::string evalfilePath) {
+    // An "fd:<fd>:<offset>:<length>" spec loads the net straight from a byte range
+    // of an open file descriptor (e.g. an uncompressed Android APK asset), so no
+    // copy to internal storage is needed. Handled once, before the directory scan.
+    if (evalfilePath.rfind("fd:", 0) == 0)
+    {
+        if (std::string(evalFile.current) != evalfilePath)
+            load_fd_net(evalfilePath);
+        return;
+    }
+
 #if defined(DEFAULT_NNUE_DIRECTORY)
     std::vector<std::string> dirs = {"<internal>", "", rootDirectory,
                                      stringify(DEFAULT_NNUE_DIRECTORY)};
@@ -234,6 +249,54 @@ void Network::load_user_net(const std::string& dir, const std::string& evalfileP
         evalFile.current        = evalfilePath;
         evalFile.netDescription = description.value();
     }
+}
+
+
+void Network::load_fd_net(const std::string& spec) {
+#if defined(_WIN32)
+    (void) spec;  // "fd:" scheme is POSIX-only (Android/Linux/macOS).
+#else
+    // spec: "fd:<fd>:<offset>:<length>". The fd is owned by this call and closed
+    // here; the caller (e.g. AssetFileDescriptor.detachFd()) transfers ownership.
+    int                fd     = -1;
+    long long          offset = 0;
+    long long          length = 0;
+    if (std::sscanf(spec.c_str(), "fd:%d:%lld:%lld", &fd, &offset, &length) != 3 || fd < 0
+        || length <= 0)
+        return;
+
+    std::vector<char> buf(static_cast<std::size_t>(length));
+    std::size_t       got = 0;
+    while (got < buf.size())
+    {
+        ssize_t n = pread(fd, buf.data() + got, buf.size() - got,
+                          static_cast<off_t>(offset) + static_cast<off_t>(got));
+        if (n <= 0)
+            break;
+        got += static_cast<std::size_t>(n);
+    }
+    ::close(fd);
+    if (got != buf.size())
+        return;
+
+    // Wrap the loaded bytes in an istream (same trick as load_internal()).
+    class MemoryBuffer: public std::basic_streambuf<char> {
+       public:
+        MemoryBuffer(char* p, std::size_t n) {
+            setg(p, p, p + n);
+            setp(p, p + n);
+        }
+    };
+    MemoryBuffer buffer(buf.data(), buf.size());
+    std::istream stream(&buffer);
+    auto         description = load(stream);
+
+    if (description.has_value())
+    {
+        evalFile.current        = spec;
+        evalFile.netDescription = description.value();
+    }
+#endif
 }
 
 
